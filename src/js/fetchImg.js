@@ -30,16 +30,9 @@ export class FetchImg {
     //   throw new Error(response.status);
     // }
 
-    let currentPage = +options.params.per_page;
-    let totalImg = response.data.totalHits;
-    let maxPage = Math.floor(totalImg / currentPage);
-    if (maxPage === this.queryPage) {
-      Notify.failure(
-        "We're sorry, but you've reached the end of search results."
-      );
-    }
     this.incrementPage();
-    return response.data.hits;
+    // console.log(response.data);
+    return response.data;
   }
 
   resetPage() {

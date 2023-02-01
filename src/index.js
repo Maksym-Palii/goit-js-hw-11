@@ -41,11 +41,24 @@ async function fetchImgCard() {
   showMoreBtnEl.disable();
   try {
     const data = await fetchImg.getImg();
-    if (data.length === 0)
-      throw new Error(
-        "We're sorry, but you've reached the end of search results."
-      );
-    const listImg = await createMurkup(data);
+    if (!data.totalHits) throw new Error();
+
+    if (!(fetchImg.queryPage > 2)) {
+      Notify.success(`Hooray! We found ${data.totalHits} images.`);
+    }
+
+    let currentPage = +fetchImg.queryPage * 40;
+    console.log(currentPage);
+    let totalImg = data.totalHits;
+    console.log(totalImg);
+
+    if (totalImg <= currentPage) {
+      Notify.info("We're sorry, but you've reached the end of search results.");
+      showMoreBtnEl.hide();
+    }
+
+    const hits = await data.hits;
+    const listImg = await createMurkup(hits);
     const murkupList = await updateImgList(listImg);
     showMoreBtnEl.enable();
     return murkupList;
@@ -53,6 +66,14 @@ async function fetchImgCard() {
     onError();
     console.log(error.message);
   }
+
+  // countHits += data.hits.length;
+  //   if (countHits === data.totalHits) {
+  //     showMoreBtnEl.hide();
+  //     return Notify.info(
+  //       "We're sorry, but you've reached the end of search results."
+  //     );
+  //   }
 }
 
 // function fetchImg() {
