@@ -8,6 +8,7 @@ export class FetchImg {
   constructor() {
     this.queryPage = 1;
     this.search = '';
+    this.per_page = 40;
   }
   async getImg() {
     const options = {
@@ -17,7 +18,7 @@ export class FetchImg {
         image_type: 'photo',
         orientation: 'horizontal',
         safesearch: 'true',
-        per_page: '40',
+        per_page: this.per_page,
         page: this.queryPage,
       },
       headers: {
@@ -26,12 +27,8 @@ export class FetchImg {
     };
 
     const response = await axios.get(URL, options);
-    // if (!response.status.ok) {
-    //   throw new Error(response.status);
-    // }
 
     this.incrementPage();
-    // console.log(response.data);
     return response.data;
   }
 
@@ -41,13 +38,5 @@ export class FetchImg {
 
   incrementPage() {
     this.queryPage += 1;
-  }
-
-  info() {
-    // Notify.info(
-    //   `Hooray! We found ${this.fetchImg.getImg.response.data.totalHits} images.`
-    // );
-    // console.log(this.fetchImg);
-    // console.log(this.getImg);
   }
 }

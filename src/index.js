@@ -1,10 +1,11 @@
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
+import SimpleLightbox from 'simplelightbox';
+import 'simplelightbox/dist/simple-lightbox.min.css';
 import { FetchImg } from './js/fetchImg';
 import { LoadMoreBtn } from './js/loadMoreBtn';
 
 const formtEl = document.querySelector('.search__form');
 const galleryEl = document.querySelector('.gallery');
-// const showMoreBtnEl = document.querySelector('.add-search__btn');
 
 const fetchImg = new FetchImg();
 const showMoreBtnEl = new LoadMoreBtn({
@@ -17,20 +18,20 @@ showMoreBtnEl.button.addEventListener('click', onMoreSearch);
 
 function onSubmit(evt) {
   evt.preventDefault();
-  // if (fetchImg.search === '') {
-  //   Notify.failure('Please enter your details');
-  // }
 
   const form = evt.currentTarget;
   fetchImg.search = form.elements.searchQuery.value.trim();
+
+  if (fetchImg.search === '') {
+    clearImgList();
+    showMoreBtnEl.hide();
+    return Notify.failure('Please enter your request');
+  }
   clearImgList();
   fetchImg.resetPage();
   showMoreBtnEl.show();
 
-  console.log(fetchImg.search);
-
-  fetchImgCard().finally(() => form.reset());
-  fetchImg.info();
+  fetchImgCard().finally(form.reset());
 }
 
 function onMoreSearch() {
@@ -41,13 +42,18 @@ async function fetchImgCard() {
   showMoreBtnEl.disable();
   try {
     const data = await fetchImg.getImg();
-    if (!data.totalHits) throw new Error();
+    if (!data.totalHits) {
+      showMoreBtnEl.hide();
+      return Notify.failure(
+        'Sorry, there are no images matching your search query. Please try again.'
+      );
+    }
 
     if (!(fetchImg.queryPage > 2)) {
       Notify.success(`Hooray! We found ${data.totalHits} images.`);
     }
 
-    let currentPage = +fetchImg.queryPage * 40;
+    let currentPage = (+fetchImg.queryPage - 1) * fetchImg.per_page;
     console.log(currentPage);
     let totalImg = data.totalHits;
     console.log(totalImg);
@@ -61,26 +67,14 @@ async function fetchImgCard() {
     const listImg = await createMurkup(hits);
     const murkupList = await updateImgList(listImg);
     showMoreBtnEl.enable();
+    lightbox.refresh();
+    scroll();
     return murkupList;
   } catch (error) {
     onError();
     console.log(error.message);
   }
-
-  // countHits += data.hits.length;
-  //   if (countHits === data.totalHits) {
-  //     showMoreBtnEl.hide();
-  //     return Notify.info(
-  //       "We're sorry, but you've reached the end of search results."
-  //     );
-  //   }
 }
-
-// function fetchImg() {
-//   return getImg(searchInfo)
-//     .then(data => createMurkup(data))
-//     .then(updateNewsList);
-// }
 
 function createMurkup(images) {
   const markup = images
@@ -94,8 +88,11 @@ function createMurkup(images) {
         comments,
         downloads,
       }) => `
+     
     <div class="photo-card">
+     <a class="photo__item" href="${largeImageURL}">
   <img class="img" src="${webformatURL}" alt="${tags}" loading="lazy" />
+  </a>
   <div class="info">
     <p class="info-item"><b>Likes</b> ${likes}</p>
     <p class="info-item"><b>Views</b> ${views}</p>
@@ -119,4 +116,20 @@ function clearImgList() {
 function onError() {
   clearImgList();
   Notify.failure('Please enter your details');
+}
+
+var lightbox = new SimpleLightbox('.gallery a', {
+  captionsData: 'alt',
+  captionDelay: '250',
+});
+
+function scroll() {
+  const { height: cardHeight = fetchImg.per_page } = document
+    .querySelector('.gallery')
+    .firstElementChild.getBoundingClientRect();
+
+  window.scrollBy({
+    top: cardHeight,
+    behavior: 'smooth',
+  });
 }
