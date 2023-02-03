@@ -27,19 +27,23 @@ function onSubmit(evt) {
     showMoreBtnEl.hide();
     return Notify.failure('Please enter your request');
   }
+  showMoreBtnEl.hide();
   clearImgList();
   fetchImg.resetPage();
-  showMoreBtnEl.show();
 
   fetchImgCard().finally(form.reset());
 }
 
 function onMoreSearch() {
-  fetchImgCard();
+  showMoreBtnEl.disable();
+  fetchImgCard().then(markup => {
+    scroll();
+
+    return markup;
+  });
 }
 
 async function fetchImgCard() {
-  showMoreBtnEl.disable();
   try {
     const data = await fetchImg.getImg();
     if (!data.totalHits) {
@@ -61,6 +65,8 @@ async function fetchImgCard() {
     if (totalImg <= currentPage) {
       Notify.info("We're sorry, but you've reached the end of search results.");
       showMoreBtnEl.hide();
+    } else {
+      showMoreBtnEl.show();
     }
 
     const hits = await data.hits;
@@ -68,7 +74,7 @@ async function fetchImgCard() {
     const murkupList = await updateImgList(listImg);
     showMoreBtnEl.enable();
     lightbox.refresh();
-    scroll();
+
     return murkupList;
   } catch (error) {
     onError();
